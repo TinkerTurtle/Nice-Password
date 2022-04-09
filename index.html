@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Password Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        @media (prefers-color-scheme: dark) {
+            body, input, textarea { background: black; color: white; }
+        }
+
+        @media (prefers-color-scheme: light) {
+            body, input, textarea { background: white; color: black; }
+        }
+    </style>
+<script>
+    // Start with all alphanumeric characters
+    let standard = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    
+    // Provide an option to exclude ambiguous characters
+    let noSimilar = '1234567890abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+    
+    // Include symbols
+    let symbols = '~!@#$%^&*()-=+{}|[]\\:";\'<>?,./';
+    let length = 14;
+    let pool = '';
+    
+    // configure adjusts the pool of possible characters in the password based on user preference
+    function configure() {
+    
+        // apply preferred password length
+        length = document.querySelector('#length').value;
+        if(length <= 1) {
+            document.querySelector('#length').value = 1;
+            length = 1;
+        }
+    
+        // apply preference to avoid ambiguous characters
+        pool = '';
+        if(document.querySelector('#optAvoidSimilar').checked) {
+            pool += noSimilar;
+        }
+        else {
+            pool += standard;
+        }
+    
+        // include all symbols
+        pool += symbols;
+    
+        // show the user the pool of possible characters
+        document.querySelector('#pool').value = pool;
+    }
+    
+    /*
+     * customizeRunes enables the user to selectively modify the pool of possible characters.
+     * This helps to accommodate services that do not allow certain symbols in the password.
+     */
+    function customizeRunes() {
+        pool = document.querySelector('#pool').value;
+    }
+    
+    // generatePassword generates a password using a cryptographically strong random number generator
+    function generatePassword() {
+    
+        // Create space to store random numbers
+        let random = new Uint32Array(length)
+    
+        // Fill the space using a crytographically strong random number generator
+        crypto.getRandomValues(random);
+    
+        // Create space to store the password
+        let pass = '';
+    
+        // Map each random number to a character in the pool of possible characters
+        random.forEach(v => {
+            pass += pool[v % pool.length];
+        });
+    
+        // Display the password on the screen
+        document.querySelector('#pass').value = pass;
+    
+        // Pre-select the password for more convenient copy and paste
+        document.querySelector('#pass').select();
+    }
+    
+    // main organizes this program
+    function main() {
+        configure();
+        generatePassword();
+    
+        // Select the entire password when the password is clicked, for convenient copy and pasting
+        document.querySelector('#pass').addEventListener('click', function() {
+            this.select();
+        });
+    
+        // Generate a new password when the button is clicked
+        document.querySelector('#regenerate').addEventListener('click', function() {
+            generatePassword();
+        });
+    
+        // Generate a new password if any configuration options change
+        document.querySelectorAll('input').forEach(e => {
+            e.addEventListener('change', function() {
+                configure();
+                generatePassword();
+            });
+        });
+    
+        // Generate a new password if the pool of possible characters is modified
+        document.querySelector('#pool').addEventListener('change', function() {
+                customizeRunes();
+                generatePassword();
+        });
+    }
+    
+    // Start this program when the page has finished loading
+    window.addEventListener('DOMContentLoaded', main);
+    
+    </script>
+</head>
+<body>
+    <div style="text-align: center;">
+        <p>Random Password:</p>
+        <input id="pass" style="width: 10rem"><button id="regenerate" style="margin-left: 1rem">🔀</button>
+    </div>
+
+    <div style="margin-top: 4rem">
+        <label for="length">Length:</label> <input type="number" id="length" value="14"><br />
+        <input type="checkbox" id="optAvoidSimilar"><label for="optAvoidSimilar">Avoid ambiguous letters/numbers</label>
+    </div>
+    <p>Possible characters in password:</p>
+    <textarea id="pool" style="width: 90vw; height: 4rem"></textarea>
+</body>
+</html>
